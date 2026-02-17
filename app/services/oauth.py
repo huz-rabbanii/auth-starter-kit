@@ -1,6 +1,8 @@
 import httpx
+from sqlmodel import Session, select
 
 from app.config import settings
+from app.models.user import User
 
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -87,3 +89,14 @@ async def exchange_github_code(code: str) -> dict:
             user_data["email"] = primary
 
         return user_data
+
+
+def get_or_create_oauth_user(session: Session, email: str, provider: str, oauth_id: str) -> User:
+    user = session.exec(select(User).where(User.email == email)).first()
+    if user:
+        return user
+    user = User(email=email, oauth_provider=provider, oauth_id=oauth_id)
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
