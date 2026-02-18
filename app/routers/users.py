@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends
-from sqlmodel import Session, select
 
-from app.database import get_session
 from app.dependencies import get_current_user, require_role
 from app.models.user import Role, User
 from app.schemas.auth import UserResponse
+from app.services.user import list_all_users
+from app.database import get_session
+from sqlmodel import Session
 
 router = APIRouter()
 
@@ -19,4 +20,4 @@ def list_users(
     session: Session = Depends(get_session),
     _: User = Depends(require_role(Role.ADMIN)),
 ):
-    return session.exec(select(User)).all()
+    return list_all_users(session)

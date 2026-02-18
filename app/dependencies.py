@@ -1,11 +1,12 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from app.database import get_session
 from app.models.user import Role, User
 from app.services.token import decode_access_token
+from app.services.user import get_user_by_email
 
 bearer = HTTPBearer()
 
@@ -21,7 +22,7 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
         )
-    user = session.exec(select(User).where(User.email == email)).first()
+    user = get_user_by_email(session, email)
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
